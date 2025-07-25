@@ -1,0 +1,56 @@
+#!/bin/bash
+# Usage: memcached-ctl [start|stop|status|restart]
+
+PORTS=(33013 33014 33015 33016)
+HOST="127.0.0.1"
+PID_DIR="/tmp/memcached.pids"
+CONFIG=""
+MEMORY=64
+MAX_CONN=1024
+
+case "$1" in
+  start)
+    mkdir -p "$PID_DIR"
+    for port in "${PORTS[@]}"; do
+      pidfile="$PID_DIR/memcached_$port.pid"
+      if [ ! -f "$pidfile" ] || ! kill -0 $(cat "$pidfile") 2>/dev/null; then
+        cmd="memcached -d -p $port -l $HOST -P $pidfile -m $MEMORY -c $MAX_CONN"
+        [ -n "$CONFIG" ] && cmd+=" -f $CONFIG"
+        $cmd
+        echo "Started memcached on $HOST:$port"
+      else
+        echo "memcached on $HOST:$port already running (pid $(cat $pidfile))"
+      fi
+    done
+    ;;
+
+  stop)
+    for port in "${PORTS[@]}"; do
+      pidfile="$PID_DIR/memcached_$port.pid"
+      if [ -f "$pidfile" ]; then
+        kill $(cat "$pidfile") 2>/dev/null && rm -f "$pidfile"
+        echo "Stopped memcached on $HOST:$port"
+      fi
+    done
+    ;;
+
+  status)
+    for port in "${PORTS[@]}"; do
+      if echo "stats" | nc -w1 $HOST $port >/dev/null; then
+        echo "$HOST:$port - RUNNING"
+      else
+        echo "$HOST:$port - STOPPED"
+      fi
+    done
+    ;;
+
+  restart)
+    $0 stop
+    sleep 1
+    $0 start
+    ;;
+
+  *)
+    echo "Usage: $0 {start|stop|status|restart}"
+    exit 1
+esac

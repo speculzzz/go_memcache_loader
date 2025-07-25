@@ -1,0 +1,11 @@
+syntax = "proto2";
+
+package appsproto;
+
+option go_package = "github.com/speculzzz/go_memcache_loader/internal/proto/appsproto";
+
+message UserApps {
+  repeated uint32 apps = 1;
+  optional double lat = 2;
+  optional double lon = 3;
+}

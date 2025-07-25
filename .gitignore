@@ -1,0 +1,5 @@
+bin/
+data/appsinstalled/*.tsv.gz
+tools/go/
+tools/protoc/
+tools/protoc-gen-go
